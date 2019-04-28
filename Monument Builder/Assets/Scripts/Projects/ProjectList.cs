@@ -14,7 +14,7 @@ namespace Assets.Scripts.Projects
             new Project(Project.ProjectDifficulty.NORMAL, "Cube", 100000, new BuildingShape(1)),
 
             //Hard
-            new Project(Project.ProjectDifficulty.HARD, "Cube", 1000000, new BuildingShape(3))
+            new Project(Project.ProjectDifficulty.HARD, "Cube", 1000000, new BuildingShape(2))
         };
 
         public Project GetRandomProject(Project.ProjectDifficulty difficulty)

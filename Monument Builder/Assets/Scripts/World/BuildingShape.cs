@@ -61,7 +61,7 @@ XX"
             var vectors = new List<Vector2>();
             var lines = Shape.Split('\n');
             var center = GetCenter(lines);
-            
+
             vectors.Add(center);
 
             var z = -1;
@@ -72,7 +72,7 @@ XX"
                 {
                     if (c == 'X')
                     {
-                        var vec2 = CalculateRotation(new Vector2(x, z), center, 90);
+                        var vec2 = CalculateRotation(new Vector2(x, z), center, rotation);
                         vectors.Add(vec2);
                     }
                     x++;
