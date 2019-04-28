@@ -6,60 +6,91 @@ namespace Assets.Scripts.Projects
 {
     public class ProjectCardManager : MonoBehaviour
     {
-        public GameObject ProjectCardsHolder;
-        public GameObject CardPrefab;
-        
+        public GameObject ProjectProgressPrefab;
+
         public Project CurrentProject;
+        public GameObject[] ProjectCards;
         public bool IsPlacedDown;
 
         private ProjectList _projectList;
         private List<GameObject> _projectCardList;
+        private GameManager _gameManager;
+        private bool _hasGenerated;
 
         public void Start()
         {
+            _gameManager = GameObject.Find("GameManager").GetComponent<GameManager>();
             _projectList = new ProjectList();
             _projectCardList = new List<GameObject>();
-
         }
+
 
         public void Update()
         {
-            if (CurrentProject == null && ProjectCardsHolder.transform.childCount == 0)
+            if (CurrentProject == null && _hasGenerated == false)
+            {
+                _hasGenerated = true;
                 GenerateProjects();
+            }
+
         }
 
+        /// <summary>
+        /// Get 3 project cards
+        /// </summary>
         public void GenerateProjects()
         {
-            Project.ProjectDifficulty[] toGenerate = { Project.ProjectDifficulty.EASY, Project.ProjectDifficulty.NORMAL, Project.ProjectDifficulty.HARD};
+            Project.ProjectDifficulty[] toGenerate = { Project.ProjectDifficulty.EASY, Project.ProjectDifficulty.NORMAL, Project.ProjectDifficulty.HARD };
 
             for (var i = 0; i < toGenerate.Length; i++)
-                GenerateProject(toGenerate[i], -150 * -(i - 1));
+                GenerateProject(toGenerate[i], i);
         }
 
-        public void GenerateProject(Project.ProjectDifficulty difficulty, int xPosition)
+        public void GenerateProject(Project.ProjectDifficulty difficulty, int index)
         {
             var project = _projectList.GetRandomProject(difficulty);
 
-            //Instantiate Project Card
-            var projectCard = Instantiate(CardPrefab);
-            projectCard.transform.SetParent(ProjectCardsHolder.transform);
-            _projectCardList.Add(projectCard);
 
             //Set the Project Card
-            projectCard.GetComponent<RectTransform>().anchoredPosition = new Vector2(xPosition, 100);
-            var cardScript = projectCard.GetComponent<ProjectCard>();
+            var cardScript = ProjectCards[index].GetComponent<ProjectCard>();
             cardScript.Project = project;
-            
-            projectCard.transform.GetChild(2).GetComponent<Button>().onClick.AddListener(() => ChooseProject(project));
+            cardScript.Initialize();
+
+            //Set the Card Building Shape
+            var i = 0;
+            for (var y = 1; y < 3; y++)
+            {
+                for (var x = 0; x < 3; x++)
+                {
+                    bool isBuild = project.Building.IsBuild(new Vector2(x, y));
+                    ProjectCards[index].transform.GetChild(2).GetChild(i).gameObject.SetActive(isBuild);
+                    i++;
+                }
+            }
+
+            //Add button click
+            ProjectCards[index].transform.GetChild(3).GetComponent<Button>().onClick.AddListener(() => ChooseProject(project));
         }
 
         public void ChooseProject(Project project)
         {
+            var projectProgress = Instantiate(ProjectProgressPrefab);
+            projectProgress.transform.SetParent(GameObject.Find("Canvas").transform);
+            projectProgress.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
+
             project.Building.GetPositions(90);
 
             _projectCardList.ForEach(Destroy);
             IsPlacedDown = false;
             CurrentProject = project;
+        }
+
+        public void RerollProjects()
+        {
+            CurrentProject = null;
+            _hasGenerated = false;
+
+            _gameManager.AddTime(Random.Range(6, 18));
         }
     }
 }

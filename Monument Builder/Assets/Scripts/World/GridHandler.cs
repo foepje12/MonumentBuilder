@@ -8,7 +8,6 @@ namespace Assets.Scripts.World
     public class GridHandler : MonoBehaviour
     {
         public enum Level { FULL, NETHERLANDS, GERMANY, FRANCE }
-        public Level CurrentLevel;
 
         public GameObject TilePrefab;
         public GameObject GhostBuilding;
@@ -17,18 +16,23 @@ namespace Assets.Scripts.World
         public GameObject CurrentBuilding;
 
         private ProjectCardManager _projectCardManager;
+        private GameVariables _gameVariables;
         private Camera _camera;
+
+        private Vector3 _inProgressLocation;
+        private int _spaceBetweenTiles = 1;
 
         public void Start()
         {
             _projectCardManager = GetComponent<ProjectCardManager>();
+            _gameVariables = GameObject.Find("GAME VARIABLES").GetComponent<GameVariables>();
             _camera = Camera.main;
             TileDictionary = new Dictionary<Vector2, GameObject>();
 
 
             string levelGrid;
 
-            switch (CurrentLevel)
+            switch (_gameVariables.CurrentLevel)
             {
                 case Level.NETHERLANDS:
                     levelGrid = Levels.GridNetherlands; break;
@@ -44,14 +48,23 @@ namespace Assets.Scripts.World
             InitiateGrid(levelGrid);
         }
 
-        private int _rotation;
+        private int _rotation = -90;
         public void Update()
         {
+            //If the current project == null or we have already placed a building down, return;
             if (_projectCardManager.CurrentProject == null || _projectCardManager.IsPlacedDown)
                 return;
 
             var building = _projectCardManager.CurrentProject.Building;
             var ray = _camera.ScreenPointToRay(Input.mousePosition);
+
+            //If we have no visual ghost building
+            if (GhostBuilding == null)
+            {
+                var prefab = Resources.Load<GameObject>($"BuildingShapes/{_gameVariables.CurrentLevel}/{_gameVariables.CurrentLevel}_{_projectCardManager.CurrentProject.Building.ShapeName}");
+                GhostBuilding = Instantiate(prefab);
+            }
+
 
             if (Physics.Raycast(ray, out var hit) == false)
                 return;
@@ -67,7 +80,7 @@ namespace Assets.Scripts.World
 
             var tile = obj.GetComponent<Tile>();
             var positions = building.GetPositions(_rotation);
-            
+
             //Update the ghost building
             UpdateGhostBuilding(tile, positions);
 
@@ -76,12 +89,14 @@ namespace Assets.Scripts.World
 
             if (canFit && Input.GetMouseButtonUp(0))
             {
+                _inProgressLocation = new Vector3(tile.Position.x, 0, tile.Position.y);
                 _projectCardManager.IsPlacedDown = true;
             }
         }
 
         public void InitiateGrid(string level)
         {
+            var gridHolder = GameObject.Find("GRID");
             var levelLines = level.Split('\n');
 
             var z = -1;
@@ -96,8 +111,9 @@ namespace Assets.Scripts.World
                             var tile = Instantiate(TilePrefab);
                             var pos = new Vector2(x, z);
 
+                            tile.transform.SetParent(gridHolder.transform);
                             tile.GetComponent<Tile>().Position = pos;
-                            tile.transform.position = new Vector3(x * 2, 0, z * 2);
+                            tile.transform.position = new Vector3(x, 0, z) * _spaceBetweenTiles;
 
                             TileDictionary.Add(pos, tile);
                             break;
@@ -111,8 +127,8 @@ namespace Assets.Scripts.World
 
         private void UpdateGhostBuilding(Tile tile, List<Vector2> positions)
         {
-            GhostBuilding.transform.position = new Vector3(tile.Position.x * 2, 0, tile.Position.y * 2);
-            GhostBuilding.transform.eulerAngles = new Vector3(0, -90 -_rotation, 0);
+            GhostBuilding.transform.position = new Vector3(tile.Position.x, 0, tile.Position.y) * _spaceBetweenTiles;
+            GhostBuilding.transform.eulerAngles = new Vector3(0, -90 - _rotation, 0);
         }
 
         private bool UpdateTiles(Tile centerTile, List<Vector2> positions)
@@ -128,12 +144,17 @@ namespace Assets.Scripts.World
                 newVecPos.x = Mathf.RoundToInt(newVecPos.x);
                 newVecPos.y = Mathf.RoundToInt(newVecPos.y);
 
-                if (TileDictionary.ContainsKey(newVecPos))
+                //If there is not tile at the given position, the building can not be placed
+                if (TileDictionary.ContainsKey(newVecPos) == false)
+                    return false;
+
+                //If the tile is not empty (already something build on)
+                if (TileDictionary[newVecPos].GetComponent<Tile>().IsEmpty)
                     continue;
 
                 return false;
             }
-            
+
             foreach (var pos in positions)
             {
                 var newVecPos = centerTile.Position + pos;
@@ -142,8 +163,37 @@ namespace Assets.Scripts.World
 
                 TileDictionary[newVecPos].GetComponent<Renderer>().material.color = Color.red;
             }
-
             return true;
+        }
+
+        public void FinishBuilding(bool positive)
+        {
+            Destroy(GhostBuilding);
+
+            if (positive == false)
+            {
+                GhostBuilding = null;
+                return;
+            }
+
+            var newBuilding = Instantiate(GhostBuilding);
+            newBuilding.transform.position = _inProgressLocation * _spaceBetweenTiles;
+            GhostBuilding = null;
+
+            foreach (var tileObject in TileDictionary)
+            {
+                var positions = _projectCardManager.CurrentProject.Building.GetPositions(_rotation);
+                var tile = tileObject.Value.GetComponent<Tile>();
+
+                foreach (var pos in positions)
+                {
+                    var offsetPos = new Vector2(pos.x + _inProgressLocation.x, pos.y + _inProgressLocation.z);
+                    bool samePos = Mathf.RoundToInt(offsetPos.x) == Mathf.RoundToInt(tile.Position.x) && Mathf.RoundToInt(offsetPos.y) == Mathf.RoundToInt(tile.Position.y);
+
+                    if (samePos)
+                        tile.IsEmpty = false;
+                }
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using UnityEngine;
 
 namespace Assets.Scripts.Events
 {
@@ -23,7 +24,7 @@ namespace Assets.Scripts.Events
         public Event GetRandomEvent()
         {
             //TODO CHANGE TO RANDOM
-            var randomEvent = EventsList[1];
+            var randomEvent = EventsList[Random.Range(0, EventsList.Count)];
             randomEvent.Occurance += 1;
 
             return randomEvent;

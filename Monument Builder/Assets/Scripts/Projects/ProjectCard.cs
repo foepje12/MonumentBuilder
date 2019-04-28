@@ -14,7 +14,12 @@ namespace Assets.Scripts.Projects
 
         void Start()
         {
-            for (var i = 0; i < (int) Project.Difficulty + 1; i++)
+
+        }
+
+        public void Initialize()
+        {
+            for (var i = 0; i < (int)Project.Difficulty + 1; i++)
                 Stars[i].SetActive(true);
 
             DescriptionText.text = Project.Name;

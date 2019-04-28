@@ -8,11 +8,11 @@ namespace Assets.Scripts.Events
     public class EventCardManager : MonoBehaviour
     {
         public GameObject EventPrefab;
-        public ProjectProgressor ProjectProgressor;
 
         private GameObject _canvas;
         private EventList _eventList;
 
+        private ProjectProgressor _projectProgressor;
         private GameObject _currentEventCard;
 
         public void Start()
@@ -24,6 +24,8 @@ namespace Assets.Scripts.Events
         public void CreateEvent()
         {
             var eventObj = _eventList.GetRandomEvent();
+
+            _projectProgressor = GameObject.FindGameObjectWithTag("ProjectProgress").GetComponent<ProjectProgressor>();
 
             _currentEventCard = Instantiate(EventPrefab);
             _currentEventCard.transform.SetParent(_canvas.transform);
@@ -37,14 +39,15 @@ namespace Assets.Scripts.Events
             switch (eventOption.OptionType)
             {
                 case EventOption.EventOptionType.FUNDING:
-                    ProjectProgressor.AddFundingCost(eventOption.Amount);
+                    _projectProgressor.AddFundingCost(eventOption.Amount);
                     break;
 
                 case EventOption.EventOptionType.MONTHS:
-                    ProjectProgressor.AddOverTime(eventOption.Amount);
+                    _projectProgressor.AddOverTime(eventOption.Amount);
                     break;
 
                 case EventOption.EventOptionType.CANCEL:
+                    _projectProgressor.CancelProject();
                     break;
 
                 default:
@@ -52,7 +55,7 @@ namespace Assets.Scripts.Events
             }
 
             Destroy(_currentEventCard);
-            ProjectProgressor.EventInProgress = false;
+            _projectProgressor.EventInProgress = false;
         }
     }
 }

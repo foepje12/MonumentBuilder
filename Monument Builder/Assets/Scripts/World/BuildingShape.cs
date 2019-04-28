@@ -4,7 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Assets.Scripts.Projects;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Assets.Scripts.World
 {
@@ -14,7 +16,7 @@ namespace Assets.Scripts.World
         /// <summary>
         /// The shapelist of buildings
         ///
-        /// 0: C   |   1: CX      EASY
+        /// 0: C   |              EASY
         ///        |
         /// 1: CX  |   2: CX      MEDIUM
         ///        |      X
@@ -45,15 +47,29 @@ XX"
         };
 
         public string Shape;
+        public string ShapeName;
+
 
         public BuildingShape(int shape)
         {
             Shape = ShapeList[shape];
+            ShapeName = GetNameFromShape(shape);
         }
 
         public BuildingShape(Project.ProjectDifficulty difficulty)
         {
             //TODO Get a random shape based on difficulty (and space available?)
+        }
+
+        public bool IsBuild(Vector2 pos)
+        {
+            var lines = Shape.Split('\n');
+            
+            if (pos.y + 1 > lines.Length || pos.x >= lines[(int)pos.y].Length)
+                return false;
+            
+            char c = lines[(int)pos.y][(int)pos.x];
+            return c != ' ' && char.IsControl(c) == false;
         }
 
         public List<Vector2> GetPositions(int rotation)
@@ -62,7 +78,8 @@ XX"
             var lines = Shape.Split('\n');
             var center = GetCenter(lines);
 
-            vectors.Add(center);
+            //The center
+            vectors.Add(new Vector2(0, 0));
 
             var z = -1;
             foreach (string line in lines)
@@ -73,7 +90,7 @@ XX"
                     if (c == 'X')
                     {
                         var vec2 = CalculateRotation(new Vector2(x, z), center, rotation);
-                        vectors.Add(vec2);
+                        vectors.Add(vec2 - center);
                     }
                     x++;
                 }
@@ -112,6 +129,25 @@ XX"
                 z++;
             }
             return Vector2.negativeInfinity;
+        }
+
+        private static string GetNameFromShape(int shape)
+        {
+            switch (shape)
+            {
+                case 0:
+                    return "Single";
+                case 1:
+                    return "Line";
+                case 2:
+                    return "Corner";
+                case 3:
+                    return "T";
+                case 4:
+                    return "Square";
+                default:
+                    return "";
+            }
         }
     }
 }

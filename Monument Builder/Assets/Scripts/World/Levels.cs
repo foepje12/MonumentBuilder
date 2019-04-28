@@ -40,7 +40,12 @@ XXXXX-
 
         public static string GridFrance =
             @"
-            
+--XXXX
+XXXX-X
+--mm--
+-Xmm--
+XX--XX
+XXX-XX
         ";
     }
 }
