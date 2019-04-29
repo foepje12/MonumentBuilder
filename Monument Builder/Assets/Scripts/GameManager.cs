@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 namespace Assets.Scripts
@@ -19,9 +20,9 @@ namespace Assets.Scripts
         public void Start()
         {
             //TODO Change this to the actual level years
-            CurrentYear = 1600;
+            CurrentYear = 1611;
             CurrentMonth = 1;
-            CurrentAge = 20;
+            CurrentAge = 35;
 
             _maxAge = 64 + Random.Range(1, 17);
         }
@@ -45,6 +46,11 @@ namespace Assets.Scripts
                 CurrentYear++;
                 CurrentMonth = 1;
             }
+        }
+
+        public void BackToMenu()
+        {
+            SceneManager.LoadScene("MenuScene");
         }
     }
 }

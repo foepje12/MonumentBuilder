@@ -19,7 +19,7 @@ namespace Assets.Scripts.Projects
         private ProjectCardManager _projectCardManager;
         private GridHandler _gridHandler;
         private EventCardManager _eventCardManager;
-
+        private Animator _cameraAnimator;
 
         public bool EventInProgress;
 
@@ -37,6 +37,8 @@ namespace Assets.Scripts.Projects
             _projectCardManager = obj.GetComponent<ProjectCardManager>();
             _gridHandler = obj.GetComponent<GridHandler>();
             _eventCardManager = obj.GetComponent<EventCardManager>();
+
+            _cameraAnimator = Camera.main.gameObject.GetComponent<Animator>();
         }
 
         public void Update()
@@ -82,14 +84,14 @@ namespace Assets.Scripts.Projects
             _turnTimer = _turnLength;
 
             //TODO Change to more random value
-            int max = ((int)project.Difficulty + 1) * 2 * 12;
+            int max = ((int)project.Difficulty + 1) * 2 * 12 + Random.Range(3, 16);
             _maxProgress = max;
 
             string startMonthText = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(_gameManager.CurrentMonth);
-            YearStart.text = YearEnd.text = $"{startMonthText} {_gameManager.CurrentYear}";
+            YearStart.text  = $"{startMonthText} {_gameManager.CurrentYear}";
 
             string month = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(_maxProgress % 12 + 1);
-            YearEnd.text = $"{month} {_gameManager.CurrentYear + (double)_maxProgress / 12}";
+            YearEnd.text = $"{month} {_gameManager.CurrentYear + _maxProgress / 12}";
 
             ProjectName.text = project.Name;
             AddFundingCost(project.InitialFundingCost);
@@ -107,7 +109,7 @@ namespace Assets.Scripts.Projects
             int rand = Random.Range(0, 100);
 
             //TODO SET MORE BALANCED RANDOM
-            if (rand > 90)
+            if (rand > 90 && _currentProgress > 5 && _currentProgress < _maxProgress - 5)
             {
                 EventInProgress = true;
                 _eventCardManager.CreateEvent();
@@ -121,11 +123,15 @@ namespace Assets.Scripts.Projects
             _gridHandler.FinishBuilding(positive);
 
             _projectCardManager.CurrentProject = null;
+            _projectCardManager.HasGenerated = false;
+
+            _cameraAnimator.SetTrigger("ToOverview");
 
             //TODO SHOW ENDING SCREEN
-            Debug.Log("Project Done!");
-
             Destroy(gameObject);
+
+            if (_gridHandler.TilesLeft() == 0)
+                _gridHandler.InstantiateVictory();
         }
 
 

@@ -18,6 +18,7 @@ namespace Assets.Scripts.World
         private ProjectCardManager _projectCardManager;
         private GameVariables _gameVariables;
         private Camera _camera;
+        private Animator _cameraAnim;
 
         private Vector3 _inProgressLocation;
         private int _spaceBetweenTiles = 1;
@@ -27,6 +28,7 @@ namespace Assets.Scripts.World
             _projectCardManager = GetComponent<ProjectCardManager>();
             _gameVariables = GameObject.Find("GAME VARIABLES").GetComponent<GameVariables>();
             _camera = Camera.main;
+            _cameraAnim = _camera.gameObject.GetComponent<Animator>();
             TileDictionary = new Dictionary<Vector2, GameObject>();
 
 
@@ -89,9 +91,21 @@ namespace Assets.Scripts.World
 
             if (canFit && Input.GetMouseButtonUp(0))
             {
+                _cameraAnim.SetTrigger("ToScenery");
                 _inProgressLocation = new Vector3(tile.Position.x, 0, tile.Position.y);
                 _projectCardManager.IsPlacedDown = true;
             }
+        }
+
+        public int TilesLeft()
+        {
+            var tilesLeft = 0;
+            foreach (var keyValuePair in TileDictionary)
+            {
+                if (keyValuePair.Value.GetComponent<Tile>().IsEmpty)
+                    tilesLeft++;
+            }
+            return tilesLeft;
         }
 
         public void InitiateGrid(string level)
@@ -194,6 +208,14 @@ namespace Assets.Scripts.World
                         tile.IsEmpty = false;
                 }
             }
+        }
+
+        public void InstantiateVictory()
+        {
+            var prefab = Resources.Load<GameObject>($"BuildingShapes/{_gameVariables.CurrentLevel}/{_gameVariables.CurrentLevel}_Monument");
+            var monument = Instantiate(prefab);
+
+            monument.transform.position = new Vector3(2.5f, 0, 2.5f);
         }
     }
 }
