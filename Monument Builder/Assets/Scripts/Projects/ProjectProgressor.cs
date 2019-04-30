@@ -1,4 +1,5 @@
-﻿using System.Globalization;
+﻿using System.Collections;
+using System.Globalization;
 using Assets.Scripts.Events;
 using Assets.Scripts.World;
 using UnityEngine;
@@ -19,15 +20,14 @@ namespace Assets.Scripts.Projects
         private ProjectCardManager _projectCardManager;
         private GridHandler _gridHandler;
         private EventCardManager _eventCardManager;
-        private Animator _cameraAnimator;
 
         public bool EventInProgress;
 
         private int _turnLength = 1;
         private float _turnTimer; //Every n seconds a new turn (month) 
         private int _maxProgress; //In whole months
-        private int _overTime;
-        private int _fundingCost;
+
+        private int _overBudget;
         private int _currentProgress;
 
         public void Start()
@@ -37,8 +37,6 @@ namespace Assets.Scripts.Projects
             _projectCardManager = obj.GetComponent<ProjectCardManager>();
             _gridHandler = obj.GetComponent<GridHandler>();
             _eventCardManager = obj.GetComponent<EventCardManager>();
-
-            _cameraAnimator = Camera.main.gameObject.GetComponent<Animator>();
         }
 
         public void Update()
@@ -59,7 +57,7 @@ namespace Assets.Scripts.Projects
             //If the project is finished:
             if (_currentProgress == _maxProgress)
             {
-                EndProject(true);
+                StartCoroutine(EndProject(true));
                 return;
             }
 
@@ -83,18 +81,20 @@ namespace Assets.Scripts.Projects
         {
             _turnTimer = _turnLength;
 
-            //TODO Change to more random value
-            int max = ((int)project.Difficulty + 1) * 2 * 12 + Random.Range(3, 16);
+            int max = 3;//  ((int)project.Difficulty + 1) * 2 * 12 + Random.Range(3, 16);
             _maxProgress = max;
 
             string startMonthText = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(_gameManager.CurrentMonth);
-            YearStart.text  = $"{startMonthText} {_gameManager.CurrentYear}";
+            YearStart.text = $"{startMonthText} {_gameManager.CurrentYear}";
 
             string month = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(_maxProgress % 12 + 1);
             YearEnd.text = $"{month} {_gameManager.CurrentYear + _maxProgress / 12}";
 
             ProjectName.text = project.Name;
-            AddFundingCost(project.InitialFundingCost);
+
+            //Project funding text
+            ProjectFundingCost.text = $"{100 + _overBudget}%";
+
 
             for (var i = 0; i < (int)project.Difficulty + 1; i++)
                 Stars[i].SetActive(true);
@@ -116,22 +116,36 @@ namespace Assets.Scripts.Projects
             }
         }
 
-        public void EndProject(bool positive)
+        public IEnumerator EndProject(bool positive)
         {
             _gameManager.AddTime(_maxProgress);
+
+            if (positive)
+                _gameManager.CreateNewspaper("Project Finished", "Citizens very happy!", "Close", () => { });
+            else
+            {
+                string description = 100 + (double)_overBudget > 125 ? "Budget too high!" : "Architect decides to stop work";
+                _gameManager.CreateNewspaper("Project Failed", description, "Close", () => { });
+            }
+
+
             _maxProgress = 0;
             _gridHandler.FinishBuilding(positive);
+
+            if (_gridHandler.TilesLeft() == 0)
+            {
+                GameObject.Find("GameManager").GetComponent<GameManager>().IsGameEnded = true;
+                _gridHandler.InstantiateVictory();
+            }
 
             _projectCardManager.CurrentProject = null;
             _projectCardManager.HasGenerated = false;
 
-            _cameraAnimator.SetTrigger("ToOverview");
+            GetComponent<Animator>().SetTrigger("PopUp");
+            yield return new WaitForSeconds(1);
 
             //TODO SHOW ENDING SCREEN
             Destroy(gameObject);
-
-            if (_gridHandler.TilesLeft() == 0)
-                _gridHandler.InstantiateVictory();
         }
 
 
@@ -141,7 +155,6 @@ namespace Assets.Scripts.Projects
         /// <param name="months"></param>
         public void AddOverTime(int months)
         {
-            _overTime += months;
             _maxProgress += months;
 
             string month = CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedMonthName(_maxProgress % 12 + 1);
@@ -150,15 +163,20 @@ namespace Assets.Scripts.Projects
 
         public void AddFundingCost(int amount)
         {
-            _fundingCost += amount;
+            _overBudget += amount;
+            var percentage = 100 + (double)_overBudget;
+            ProjectFundingCost.text = $"{percentage}%";
 
-            string fundingStr = _fundingCost.ToString("C0");
-            ProjectFundingCost.text = "€" + fundingStr.Substring(1, fundingStr.Length - 1);
+            if (percentage >= 125)
+            {
+                //TODO SHOW Project failed
+                StartCoroutine(EndProject(false));
+            }
         }
 
         public void CancelProject()
         {
-            EndProject(false);
+            StartCoroutine(EndProject(false));
         }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using Assets.Scripts.Projects;
+using Assets.Scripts.World;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,16 +15,18 @@ namespace Assets.Scripts.Events
 
         private ProjectProgressor _projectProgressor;
         private GameObject _currentEventCard;
+        private GridHandler _gridHandler;
 
         public void Start()
         {
             _canvas = GameObject.Find("Canvas");
+            _gridHandler = GetComponent<GridHandler>();
             _eventList = new EventList();
         }
 
         public void CreateEvent()
         {
-            var eventObj = _eventList.GetRandomEvent();
+            var eventObj = _eventList.GetRandomEvent(_gridHandler.CurrentLevel);
 
             _projectProgressor = GameObject.FindGameObjectWithTag("ProjectProgress").GetComponent<ProjectProgressor>();
 

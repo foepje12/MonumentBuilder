@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,39 +29,35 @@ namespace Assets.Scripts.Projects
             _projectCardList = new List<GameObject>();
 
             _cardHolderAnim = ProjectCardsHolder.GetComponent<Animator>();
-            _cameraAnim = Camera.main.gameObject.GetComponent<Animator>();
+            _cameraAnim = GameObject.Find("CameraRotator").GetComponent<Animator>();
         }
-
 
         public void Update()
         {
-            if (CurrentProject == null && HasGenerated == false)
+            if (CurrentProject == null && HasGenerated == false && _gameManager.IsGameEnded == false)
             {
                 HasGenerated = true;
-                GenerateProjects();
+                StartCoroutine(GenerateProjects(false));
             }
 
         }
 
-        private int _projectCounter;
         /// <summary>
         /// Get 3 project cards
         /// </summary>
-        public void GenerateProjects()
+        public IEnumerator GenerateProjects(bool reroll)
         {
-            if (_projectCounter != 0)
+            if (reroll == false)
+            {
                 _cameraAnim.SetTrigger("ToOverview");
-            _cardHolderAnim.SetTrigger("Popup");
-
-            Debug.Log("New Project");
-
-            _projectCounter++;
+                yield return new WaitForSeconds(1.5f);
+                _cardHolderAnim.SetTrigger("Popup");
+            }
 
             Project.ProjectDifficulty[] toGenerate = { Project.ProjectDifficulty.EASY, Project.ProjectDifficulty.NORMAL, Project.ProjectDifficulty.HARD };
 
             for (var i = 0; i < toGenerate.Length; i++)
                 GenerateProject(toGenerate[i], i);
-
         }
 
         public void GenerateProject(Project.ProjectDifficulty difficulty, int index)
@@ -84,28 +81,41 @@ namespace Assets.Scripts.Projects
                 }
             }
 
+            Button button = ProjectCards[index].transform.GetChild(3).GetComponent<Button>();
+            button.onClick.RemoveAllListeners(); // Reset the button
+
             //Add button click
-            ProjectCards[index].transform.GetChild(3).GetComponent<Button>().onClick.AddListener(() => ChooseProject(project));
+            button.onClick.AddListener(() => StartCoroutine(ChooseProject(project)));
         }
 
-        public void ChooseProject(Project project)
+        public IEnumerator ChooseProject(Project project)
         {
             _cardHolderAnim.SetTrigger("PopDown");
+            yield return new WaitForSeconds(0.75f); //Wait for the cards to go down
+
             var projectProgress = Instantiate(ProjectProgressPrefab);
             projectProgress.transform.SetParent(GameObject.Find("Canvas").transform);
             projectProgress.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
 
             project.Building.GetPositions(90);
-
-            _projectCardList.ForEach(Destroy);
+            
             IsPlacedDown = false;
             CurrentProject = project;
         }
 
+        public void CancelBuilding()
+        {
+            _cardHolderAnim.SetTrigger("Popup");
+        }
+
+        public void DestroyCards()
+        {
+            _projectCardList.ForEach(Destroy);
+        }
+
         public void RerollProjects()
         {
-            CurrentProject = null;
-            HasGenerated = false;
+            StartCoroutine(GenerateProjects(true));
 
             _gameManager.AddTime(Random.Range(6, 18));
         }

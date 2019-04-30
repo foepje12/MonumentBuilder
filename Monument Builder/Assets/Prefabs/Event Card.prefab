@@ -167,7 +167,7 @@ MonoBehaviour:
     m_FontStyle: 0
     m_BestFit: 1
     m_MinSize: 2
-    m_MaxSize: 40
+    m_MaxSize: 20
     m_Alignment: 3
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -298,6 +298,11 @@ PrefabInstance:
       propertyPath: m_Name
       value: Event Option 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4390588818993370310, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1,
+        type: 3}
+      propertyPath: m_Text
+      value: Test Text
+      objectReference: {fileID: 0}
     - target: {fileID: 5970563722932240882, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -408,11 +413,6 @@ PrefabInstance:
       propertyPath: m_Name
       value: Option2
       objectReference: {fileID: 0}
-    - target: {fileID: 4390588818993370310, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1,
-        type: 3}
-      propertyPath: m_Text
-      value: Test Text
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1, type: 3}
 --- !u!224 &8926416523412707852 stripped
@@ -444,6 +444,11 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Event Option 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4390588818993370310, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1,
+        type: 3}
+      propertyPath: m_Text
+      value: Test Text
       objectReference: {fileID: 0}
     - target: {fileID: 5970563722932240882, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1,
         type: 3}
@@ -554,11 +559,6 @@ PrefabInstance:
         type: 3}
       propertyPath: m_Name
       value: Option1
-      objectReference: {fileID: 0}
-    - target: {fileID: 4390588818993370310, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1,
-        type: 3}
-      propertyPath: m_Text
-      value: Test Text
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ec97e092e39f6ce40b2e5d5f5f76bfa1, type: 3}

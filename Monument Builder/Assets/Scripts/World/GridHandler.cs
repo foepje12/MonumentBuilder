@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
 using Assets.Scripts.Projects;
 using UnityEditor;
 using UnityEngine;
@@ -7,13 +8,13 @@ namespace Assets.Scripts.World
 {
     public class GridHandler : MonoBehaviour
     {
-        public enum Level { FULL, NETHERLANDS, GERMANY, FRANCE }
+        public enum Level { ANY, FULL, NETHERLANDS, GERMANY, FRANCE }
 
         public GameObject TilePrefab;
         public GameObject GhostBuilding;
         public Dictionary<Vector2, GameObject> TileDictionary; //Used for checking if the tile is empty and space calculations
 
-        public GameObject CurrentBuilding;
+        public Level CurrentLevel;
 
         private ProjectCardManager _projectCardManager;
         private GameVariables _gameVariables;
@@ -23,30 +24,45 @@ namespace Assets.Scripts.World
         private Vector3 _inProgressLocation;
         private int _spaceBetweenTiles = 1;
 
+        private string _currentLevel;
+
         public void Start()
         {
             _projectCardManager = GetComponent<ProjectCardManager>();
-            _gameVariables = GameObject.Find("GAME VARIABLES").GetComponent<GameVariables>();
+            _gameVariables = GameObject.Find("GAME VARIABLES")?.GetComponent<GameVariables>();
             _camera = Camera.main;
-            _cameraAnim = _camera.gameObject.GetComponent<Animator>();
+            _cameraAnim = GameObject.Find("CameraRotator").GetComponent<Animator>();
+            
             TileDictionary = new Dictionary<Vector2, GameObject>();
+            
+            string levelGrid; // The actual grid with X and - characters
 
-
-            string levelGrid;
-
-            switch (_gameVariables.CurrentLevel)
+            if (_gameVariables == null)
             {
-                case Level.NETHERLANDS:
-                    levelGrid = Levels.GridNetherlands; break;
-                case Level.GERMANY:
-                    levelGrid = Levels.GridGermany; break;
-                case Level.FRANCE:
-                    levelGrid = Levels.GridFrance; break;
-                default:
-                    levelGrid = Levels.GridFull;
-                    break;
+                CurrentLevel = Level.FRANCE;
+                _currentLevel = "FRANCE";
+                levelGrid = Levels.GridFull;
             }
-
+            else
+            {
+                CurrentLevel = _gameVariables.CurrentLevel;
+                _currentLevel = _gameVariables.CurrentLevel.ToString();
+                switch (_gameVariables.CurrentLevel)
+                {
+                    case Level.NETHERLANDS:
+                        levelGrid = Levels.GridNetherlands;
+                        break;
+                    case Level.GERMANY:
+                        levelGrid = Levels.GridGermany;
+                        break;
+                    case Level.FRANCE:
+                        levelGrid = Levels.GridFrance;
+                        break;
+                    default:
+                        levelGrid = Levels.GridFull;
+                        break;
+                }
+            }
             InitiateGrid(levelGrid);
         }
 
@@ -63,7 +79,7 @@ namespace Assets.Scripts.World
             //If we have no visual ghost building
             if (GhostBuilding == null)
             {
-                var prefab = Resources.Load<GameObject>($"BuildingShapes/{_gameVariables.CurrentLevel}/{_gameVariables.CurrentLevel}_{_projectCardManager.CurrentProject.Building.ShapeName}");
+                var prefab = Resources.Load<GameObject>($"BuildingShapes/{_currentLevel}/{_currentLevel}_{_projectCardManager.CurrentProject.Building.ShapeName}");
                 GhostBuilding = Instantiate(prefab);
             }
 
@@ -89,10 +105,25 @@ namespace Assets.Scripts.World
             //Update the colours of the tiles, and check if a building can fit
             bool canFit = UpdateTiles(tile, positions);
 
+            //Cancel the building placement, it probably cannot fit anywhere
+            if (Input.GetKeyUp(KeyCode.Escape))
+            {
+                Destroy(GameObject.FindGameObjectWithTag("ProjectProgress"));
+                Destroy(GhostBuilding);
+                _projectCardManager.CurrentProject = null;
+                _projectCardManager.CancelBuilding();
+            }
+
+            //The player has clicked and selected a tile, now to place it
             if (canFit && Input.GetMouseButtonUp(0))
             {
                 _cameraAnim.SetTrigger("ToScenery");
                 _inProgressLocation = new Vector3(tile.Position.x, 0, tile.Position.y);
+
+                GameObject.FindGameObjectWithTag("ProjectProgress").GetComponent<Animator>().SetTrigger("PopDown");
+
+                _rotation = -90;
+                _projectCardManager.DestroyCards();
                 _projectCardManager.IsPlacedDown = true;
             }
         }
@@ -212,7 +243,10 @@ namespace Assets.Scripts.World
 
         public void InstantiateVictory()
         {
-            var prefab = Resources.Load<GameObject>($"BuildingShapes/{_gameVariables.CurrentLevel}/{_gameVariables.CurrentLevel}_Monument");
+            _cameraAnim.SetTrigger("ToVictory");
+            GameObject.Find("Fireworks").transform.GetChild(0).gameObject.SetActive(true);
+
+            var prefab = Resources.Load<GameObject>($"BuildingShapes/{_currentLevel}/{_currentLevel}_Monument");
             var monument = Instantiate(prefab);
 
             monument.transform.position = new Vector3(2.5f, 0, 2.5f);

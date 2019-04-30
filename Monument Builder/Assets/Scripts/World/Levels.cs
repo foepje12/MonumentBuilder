@@ -12,6 +12,15 @@ namespace Assets.Scripts.World
         //- == empty space
         //m == monument space
 
+        public static string GridEmpty =
+            @"
+-----X
+------
+--mm--
+--mm--
+------
+------";
+
         public static string GridFull =
             @"
 XXXXXX
@@ -21,14 +30,14 @@ XXXXXX
 XXXXXX
 XXXXXX";
 
-        public static string GridNetherlands = 
+        public static string GridNetherlands =
             @"
 X--XXX
 XX-XX-
 XmmmmX
 -mmmmX
 XX--XX
-XXXXX-
+XX-XX-
         ";
 
 
@@ -38,14 +47,24 @@ XXXXX-
         ";
 
 
-        public static string GridFrance =
+      /*   public static string GridFrance =
             @"
+------
+------
+--mm--
+--mm--
+------
+--XX--
+              ";*/
+
+             public static string GridFrance =
+                   @"
 --XXXX
 XXXX-X
 --mm--
 -Xmm--
 XX--XX
 XXX-XX
-        ";
+                    ";//*/
     }
 }

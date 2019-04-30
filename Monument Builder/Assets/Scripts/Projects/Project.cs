@@ -15,14 +15,12 @@ namespace Assets.Scripts.Projects
         public ProjectDifficulty Difficulty;
         public int Occurance;
         public string Name;
-        public int InitialFundingCost;
         public BuildingShape Building;
 
-        public Project(ProjectDifficulty difficulty, string name, int fundingCost, BuildingShape building)
+        public Project(ProjectDifficulty difficulty, string name, BuildingShape building)
         {
             Difficulty = difficulty;
             Name = name;
-            InitialFundingCost = fundingCost;
             Building = building;
         }
     }

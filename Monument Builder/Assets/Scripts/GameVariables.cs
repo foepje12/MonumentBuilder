@@ -1,34 +1,40 @@
-﻿using UnityEngine;
+﻿using Assets.Scripts.World;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using static Assets.Scripts.World.GridHandler;
 
-public class GameVariables : MonoBehaviour
+namespace Assets.Scripts
 {
-    public Level CurrentLevel;
-
-    public void Start()
+    public class GameVariables : MonoBehaviour
     {
-        DontDestroyOnLoad(this);
-    }
+        public GridHandler.Level CurrentLevel;
 
-    public void PlayGame(string levelName)
-    {
-        switch (levelName)
+        public void Start()
         {
-            case "France":
-                CurrentLevel = Level.FRANCE;
-                break;
-            default:
-                CurrentLevel = Level.FULL;
-                break;
+            DontDestroyOnLoad(this);
         }
 
-        SceneManager.LoadScene("GameScene");
-    }
+        public void PlayGame(string levelName)
+        {
+            switch (levelName)
+            {
+                case "France":
+                    CurrentLevel = GridHandler.Level.FRANCE;
+                    break;
+                case "Netherlands":
+                    CurrentLevel = GridHandler.Level.NETHERLANDS;
+                    break;
+                default:
+                    CurrentLevel = GridHandler.Level.FULL;
+                    break;
+            }
 
-    public void ExitApplication()
-    {
-        Application.Quit();
-    }
+            SceneManager.LoadScene("GameScene");
+        }
 
+        public void ExitApplication()
+        {
+            Application.Quit();
+        }
+
+    }
 }
